@@ -2,7 +2,7 @@
 
     if (typeof Lampa === 'undefined') return;
 
-    const KEY = 'lampa_collections_v1';
+    const KEY = 'lampa_collections_v2';
 
     function load() {
         try {
@@ -19,12 +19,9 @@
     function addMovie(movie) {
         const collections = load();
         const name = prompt('Назва колекції');
-
         if (!name) return;
 
-        if (!collections[name]) {
-            collections[name] = { cover: null, movies: [] };
-        }
+        collections[name] = collections[name] || { cover: null, movies: [] };
 
         if (collections[name].movies.find(m => m.id === movie.id)) {
             Lampa.Noty.show('Фільм уже є');
@@ -38,20 +35,17 @@
         };
 
         collections[name].movies.push(data);
-
-        if (!collections[name].cover) {
-            collections[name].cover = movie.poster;
-        }
+        if (!collections[name].cover) collections[name].cover = movie.poster;
 
         save(collections);
-        Lampa.Noty.show('Додано');
+        Lampa.Noty.show('Додано до колекції');
     }
 
     function openCollections() {
         const collections = load();
 
         const items = Object.keys(collections).map(name => ({
-            title: name,
+            title: '⭐ ' + name,
             subtitle: collections[name].movies.length + ' фільмів',
             poster: collections[name].cover,
             onClick: () => openCollection(name)
@@ -60,7 +54,7 @@
         Lampa.Activity.push({
             component: 'list',
             title: 'Мої колекції',
-            items: items,
+            items,
             onBack: () => Lampa.Activity.pop()
         });
     }
@@ -87,13 +81,14 @@
         Lampa.Activity.push({
             component: 'list',
             title: name,
-            items: items,
+            items,
             onBack: () => Lampa.Activity.pop()
         });
     }
 
+    /* ====== КНОПКА В КАРТЦІ ФІЛЬМУ ====== */
     Lampa.Listener.follow('full', function (e) {
-        if (e.type === 'build') {
+        if (e.type === 'build' && e.object && e.object.menu) {
             e.object.menu.append({
                 title: '➕ У колекцію',
                 onClick: () => addMovie(e.object.data)
@@ -101,13 +96,17 @@
         }
     });
 
-    Lampa.Listener.follow('menu', function (e) {
-        if (e.type === 'build') {
-            e.object.items.push({
-                title: '⭐ Мої колекції',
-                onClick: openCollections
-            });
-        }
-    });
+    /* ====== КНОПКА В ГОЛОВНОМУ МЕНЮ (2 СПОСОБИ) ====== */
+    function addToMenu(e) {
+        if (e.type !== 'build') return;
+
+        e.object.items.push({
+            title: '⭐ Мої колекції',
+            onClick: openCollections
+        });
+    }
+
+    Lampa.Listener.follow('menu', addToMenu);
+    Lampa.Listener.follow('main', addToMenu);
 
 })();
