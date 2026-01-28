@@ -1,30 +1,22 @@
 (function () {
 
-    if (typeof Lampa === 'undefined') return;
+    if (!window.Lampa) return;
 
-    const KEY = 'lampa_collections_v2';
+    const KEY = 'lampa_web_collections';
 
-    function load() {
-        try {
-            return JSON.parse(localStorage.getItem(KEY)) || {};
-        } catch (e) {
-            return {};
-        }
-    }
-
-    function save(data) {
-        localStorage.setItem(KEY, JSON.stringify(data));
-    }
+    const load = () => JSON.parse(localStorage.getItem(KEY) || '{}');
+    const save = data => localStorage.setItem(KEY, JSON.stringify(data));
 
     function addMovie(movie) {
         const collections = load();
         const name = prompt('Назва колекції');
+
         if (!name) return;
 
         collections[name] = collections[name] || { cover: null, movies: [] };
 
         if (collections[name].movies.find(m => m.id === movie.id)) {
-            Lampa.Noty.show('Фільм уже є');
+            Lampa.Noty.show('Фільм уже є в колекції');
             return;
         }
 
@@ -45,7 +37,7 @@
         const collections = load();
 
         const items = Object.keys(collections).map(name => ({
-            title: '⭐ ' + name,
+            title: name,
             subtitle: collections[name].movies.length + ' фільмів',
             poster: collections[name].cover,
             onClick: () => openCollection(name)
@@ -86,7 +78,7 @@
         });
     }
 
-    /* ====== КНОПКА В КАРТЦІ ФІЛЬМУ ====== */
+    /* 🔥 КНОПКА В КАРТЦІ ФІЛЬМУ */
     Lampa.Listener.follow('full', function (e) {
         if (e.type === 'build' && e.object && e.object.menu) {
             e.object.menu.append({
@@ -96,17 +88,14 @@
         }
     });
 
-    /* ====== КНОПКА В ГОЛОВНОМУ МЕНЮ (2 СПОСОБИ) ====== */
-    function addToMenu(e) {
-        if (e.type !== 'build') return;
-
-        e.object.items.push({
-            title: '⭐ Мої колекції',
-            onClick: openCollections
-        });
-    }
-
-    Lampa.Listener.follow('menu', addToMenu);
-    Lampa.Listener.follow('main', addToMenu);
+    /* ⚙️ ПУНКТ У НАЛАШТУВАННЯХ */
+    Lampa.Listener.follow('settings', function (e) {
+        if (e.type === 'build') {
+            e.object.items.push({
+                title: '⭐ Мої колекції',
+                onClick: openCollections
+            });
+        }
+    });
 
 })();
